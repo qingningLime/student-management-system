@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐播放器</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(260deg, #c04060 0%, #bf4f9e 20%, #d671eb 40%, #b371e6 60%, #958bff 80%, #7398d7 90%, #6d8cdd 95%, #3a6999 100%);
+            background-size: 800% 800%;
+            animation: Gradient 15s ease infinite;
+            overflow: hidden; /* 隐藏滚动条 */
+            zoom: 100%;
+            transform: scale(1); /* 设置缩放比例为175% */
+            transform-origin: top left; /* 设置缩放的原点 */
+            /* 设置宽度为视口宽度 */
+            width: 100vw;
+            /* 设置高度为视口高度 */
+            height: 100vh;
+        }
+
+        @keyframes Gradient {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .player, .todo-list {
+            /* 设置内边距为20px */
+            padding: 20px;
+            /* 设置阴影，阴影大小为10px，颜色为rgba(0, 0, 0, 0.1) */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            /* 设置背景颜色为rgba(255, 255, 255, 0.2) */
+            background: rgba(255, 255, 255, 0.2);
+            /* 设置边框圆角为20px */
+            border-radius: 20px;
+            /* 设置外边距为20px */
+            margin: 20px;
+            /* 设置背景模糊效果，模糊半径为10px */
+            backdrop-filter: blur(10px);
+            /* 设置兼容性，-webkit-前缀 */
+            -webkit-backdrop-filter: blur(10px);
+            /* 设置弹性布局，占据剩余空间 */
+            flex: 1;
+            /* 设置最小宽度为300px */
+            min-width: 300px;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .upload-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            margin-top: 10px;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(270deg, #ff9a9e, #fad0c4);
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: linear-gradient(270deg, #fad0c4, #ff9a9e);
+        }
+
+        .song-title {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px; /* 添加底部间距，为进度条留出空间 */
+        }
+
+        .progress-bar {
+            margin-top: 0; /* 移除进度条的上边距 */
+        }
+
+        /* 美化输入框和按钮 */
+        /* 设置文本输入框和按钮的样式 */
+        input[type="text"],
+        button {
+            /* 设置内边距 */
+            padding: 10px 15px;
+            /* 去除边框 */
+            border: none;
+            /* 设置边框圆角 */
+            border-radius: 15px;
+            /* 设置字体大小 */
+            font-size: 16px;
+            /* 设置上边距 */
+            margin-top: 10px;
+            /* 去除聚焦时的轮廓 */
+            outline: none;
+            /* 设置阴影 */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"] {
+            padding: 10px 15px; /* 内边距 */
+            border: none; /* 无边框 */
+            border-radius: 15px; /* 圆角 */
+            font-size: 16px; /* 字体大小 */
+            margin-top: 10px; /* 顶部外边距 */
+            outline: none; /* 无轮廓 */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* 阴影 */
+            background: #fff; /* 背景颜色 */
+            width: calc(100% - 32px); /* 考虑padding和border */
+            max-width: 100%; /* 设置最大宽度 */
+            word-wrap: break-word; /* 自动换行 */
+        }
+
+        /* 按钮样式 */
+        button {
+            /* 背景渐变，从#ff9a9e到#fad0c4 */
+            background: linear-gradient(270deg, #ff9a9e, #fad0c4);
+            /* 字体颜色为白色 */
+            color: #fff;
+            /* 鼠标悬停时显示手型 */
+            cursor: pointer;
+            /* 背景渐变过渡效果，0.3s内完成，缓动函数为ease */
+            transition: background 0.3s ease;
+        }
+
+        /* 鼠标悬停时按钮样式 */
+        button:hover {
+            /* 背景渐变，从#fad0c4到#ff9a9e */
+            background: linear-gradient(270deg, #fad0c4, #ff9a9e);
+        }
+
+        /* 美化音量和进度条 */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #ff9a9e;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border: 0;
+            border-radius: 50%;
+            background: #ff9a9e;
+            cursor: pointer;
+        }
+
+        /* 修改进度条样式 */
+        input[type="range"].progress-bar {
+            height: 15px; /* 调整进度条粗细 */
+            background: linear-gradient(to right, #ff9a9e, #fad0c4); /* 已播放部分的背景渐变 */
+            border-radius: 20px; /* 圆角 */
+        }
+
+        /* 修改进度条滑块样式 */
+        input[type="range"].progress-bar::-webkit-slider-thumb {
+            width: 20px; /* 滑块宽度 */
+            height: 20px; /* 滑块高度 */
+            background: #fff; /* 滑块背景色 */
+            border: 2px solid #ff9a9e; /* 滑块边框 */
+            border-radius: 50%; /* 圆形滑块 */
+        }
+
+        input[type="range"].progress-bar::-moz-range-thumb {
+            width: 20px; /* 滑块宽度 */
+            height: 20px; /* 滑块高度 */
+            background: #fff; /* 滑块背景色 */
+            border: 2px solid #ff9a9e; /* 滑块边框 */
+            border-radius: 50%; /* 圆形滑块 */
+        }
+
+        /* 响应式布局 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+
+        /* 音频条样式 */
+        #audio-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 150px; /* 柱子最大高度 */
+            margin-top: 20px;
+        }
+
+        .bar {
+            width: 20px; /* 柱子宽度 */
+            background: linear-gradient(180deg, #fad0c4,#ff9a9e );
+            border-radius: 5px;
+            margin: 0 2px;
+            transition: height 0.1s ease;
+        }
+
+        /* 音量控制样式 */
+        .volume-control {
+            position: relative;
+            display: inline-block;
+        }
+
+        .volume-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .volume-slider {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            display: none; /* 初始状态隐藏音量条 */
+            transition: display 0.3s ease;
+        }
+
+        .volume-control:hover .volume-slider {
+            display: block; /* 鼠标悬停时显示音量条 */
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff9a9e;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #ff9a9e;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .playlist-container {
+            max-height: 38vh; /* 设置最大高度为视窗高度的40% */
+            overflow-y: auto; /* 当内容超出时允许垂直滚动 */
+            scrollbar-width: thin; /* 设置滚动条宽度 */
+            scrollbar-color: #888 #f1f1f1; /* 设置滚动条颜色 */
+        }
+
+        /* 添加时间显示框样式 */
+        .time-display-box {
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            margin: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            flex: 1;
+            min-width: 300px;
+            padding: 10px;
+            /* color: transparent; 设置字体颜色透明，以显示背景渐变 */
+            font-size: 50px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            font-family: 'YourFontHere', sans-serif; /* 指定字体 */
+            font-weight: bold; /* 加粗字体 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .time-display-box .time {
+            font-size: 32px; /* 时间字体大小 */
+            margin-bottom: 5px; /* 时间和问候语之间的空隙 */
+            background: linear-gradient(230deg, 
+                #c04060 0%, 
+                #bf4f9e 8%, 
+                #d671eb 16%, 
+                #b371e6 24%, 
+                #958bff 32%, 
+                #7398d7 40%, 
+                #6d8cdd 48%, 
+                #3a6999 56%, 
+                #1c677a 64%, 
+                #107679f1 72%, 
+                #047f77 80%, 
+                #137f5b 88%, 
+                #148d8b 96%, 
+                #1c677a 100%
+            );  /* 更多样化的渐变色背景 */
+            animation: Gradient 10s ease infinite;
+            -webkit-background-clip: text; /* 裁剪背景渐变到文本 */
+            background-clip: text;
+            background-size: 200% 200%; /* 确保渐变覆盖整个元素 */
+            color: transparent; /* 颜色设置为透明以显示背景渐变 */
+        }
+
+        .time-display-box .greeting {
+            font-size: 18px; /* 问候语字体大小 */
+            color: rgba(109, 109, 109, 0.632); /* 问候语颜色改为灰色 */
+        }
+
+        
+        .container {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .player {
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .right-section {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .time-display-box,
+        .todo-list {
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+
+        .todo-list {
+            flex: 1;
+        }
+
+        .todo-item {
+        padding: 10px;
+        /* background-color: #f9a4d6bc; */
+        border-radius: 15px; /* 调整曲率 */
+        /* 增加顶部外边距 */
+        margin-top: 10px;
+        margin-bottom: 10px;/* 增加底部外边距 */
+        /* 设置弹性布局 */
+        display: flex;
+        /* 主轴上的项目之间的间隔为等间距 */
+        justify-content: space-between;
+        /* 交叉轴上的项目居中对齐 */
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+        /* border-left: 5px solid #ff9a9e; 添加左边框 */
+        /* 设置最大宽度 */
+        max-width: 100%;
+        /* 设置文本换行 */
+        word-wrap: break-word; /* 自动换行 */
+        background-color: #f9a4d6bc; /* 设置随机背景颜色 */
+        }
+
+
+        .todo-item .timestamp {
+            font-size: 10px;
+            color: #888;
+            margin-right: 10px; /* 增加时间戳与按钮之间的右边距 */
+        }
+        .todo-item button {
+        background: none;
+        color: #f53b41;
+        border: none;
+        font-size: 18px; /* 调整字体大小 */
+        padding: 0;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        }
+
+        .todo-item button:hover {
+        background: #ae0a0f; /* 按钮悬停颜色 */
+        }
+
+        .upload-btn {
+            background-color: transparent; /* 移除背景颜色 */
+            /* 其他样式保持不变 */
+        }
+        
+        .lock-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            margin-top: 10px;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(270deg, #ff9a9e, #fad0c4);
+            color: #fff;
+            /* cursor: pointer; */
+            transition: background 0.3s ease;
+        }
+
+        .lock-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+
+        #black-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999; /* 确保黑屏在锁定屏幕下面 */
+        }
+
+        /* 添加锁定屏幕的样式 */
+        #lock-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(165, 234, 255, 0.5); /* 半透明背景 */
+            backdrop-filter: blur(10px); /* 模糊效果 */
+            -webkit-backdrop-filter: blur(10px); /* 兼容Safari */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000; /* 确保锁定屏幕在最上层 */
+            animation: fadeIn 0.5s ease-in-out; /* 添加动画效果 */
+        }
+
+        /* 添加动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* #lock-screen input {
+            padding: 10px;
+            font-size: 20px;
+            margin-bottom: 20px;
+        } */
+
+        /* #lock-screen button {
+            padding: 10px 20px;
+            font-size: 20px;
+            background: linear-gradient(270deg, #9abfff, #ccc4fa);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        #lock-screen button:hover {
+            background: linear-gradient(270deg, #ccc4fa, #9abfff);
+        } */
+        .password-input {
+            /* 设置密码输入框的内边距 */
+            padding: 10px 15px;
+            /* 设置密码输入框的边框样式 */
+            border: 2px solid #ccc;
+            /* 设置密码输入框的边框圆角 */
+            border-radius: 30px;
+            /* 设置密码输入框的字体大小 */
+            font-size: 14px;
+            /* 设置密码输入框的底部外边距 */
+            margin-bottom: 20px;
+            /* 取消密码输入框的轮廓 */
+            outline: none;
+            /* 设置密码输入框的阴影 */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            /* 设置密码输入框的边框颜色过渡效果 */
+            transition: border-color 0.3s ease;
+            /* 设置密码输入框的背景颜色 */
+            background-color: #f5f5f5;
+            /* 设置密码输入框的字体颜色 */
+            color: #333;
+            /* 设置密码输入框的宽度 */
+            width: 200px;
+            /* 设置密码输入框的高度 */
+            height: 30px;
+            /* 设置密码输入框的字体粗细 */
+            /* font-weight: bold; */
+            /* 设置密码输入框的字体样式 */
+            /* font-style: italic; */
+            /* 设置密码输入框的字体阴影 */
+            /* text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); */
+            /* 设置密码输入框的边框颜色 */
+            border-color: #ccc;
+            /* 设置密码输入框的边框颜色过渡效果 */
+            transition: border-color 0.3s ease;
+        }
+
+        .password-input:focus {
+            /* 设置密码输入框获得焦点时的边框颜色 */
+            border-color: #ff9a9e;
+        }
+
+        .unlock-btn {
+            /* 设置解锁按钮的内边距 */
+            padding: 10px 20px;
+            /* 设置解锁按钮的字体大小 */
+            font-size: 20px;
+            /* 设置解锁按钮的背景渐变 */
+            background: linear-gradient(270deg, #9abfff, #ccc4fa);
+            /* 设置解锁按钮的文字颜色 */
+            color: #fff;
+            /* 取消解锁按钮的边框 */
+            border: none;
+            /* 设置解锁按钮的边框圆角 */
+            border-radius: 15px;
+            /* 设置解锁按钮的鼠标样式 */
+            cursor: pointer;
+            /* 设置解锁按钮的背景过渡效果 */
+            transition: background 0.3s ease;
+        }
+
+        .unlock-btn:hover {
+            /* 设置解锁按钮鼠标悬停时的背景渐变 */
+            background: linear-gradient(270deg, #ccc4fa, #9abfff);
+        }
+        .password-display {
+            /* 设置密码显示框的字体大小 */
+            font-size: 30px;
+            /* 设置密码显示框的底部外边距 */
+            margin-bottom: 10px;
+            /* 设置密码显示框的文本对齐方式 */
+            text-align: center;
+            /* 设置密码显示框的背景颜色 */
+            background-color: #66c4d731;
+            /* 设置密码显示框的边框样式 */
+            border: 2px solid #ffffff00;
+            /* 设置密码显示框的边框圆角 */
+            border-radius: 20px;
+            /* 设置密码显示框的阴影 */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            /* 设置密码显示框的宽度 */
+            width: 200px;
+            /* 设置密码显示框的高度 */
+            height: 60px;
+            /* 设置密码显示框的显示方式 */
+            display: flex;
+            /* 设置密码显示框的垂直居中 */
+            /* align-items: center; */
+            /* 设置密码显示框的水平居中 */
+            justify-content: center;
+            /* 字体 */
+            font-family: 'Arial', Courier, monospace;
+
+        }
+
+        .confirm-btn {
+            /* 设置确认按钮的内边距 */
+            padding: 10px 20px;
+            /* 设置确认按钮的字体大小 */
+            font-size: 20px;
+            /* 设置确认按钮的背景渐变 */
+            background: linear-gradient(270deg, #9abfff, #ccc4fa);
+            /* 设置确认按钮的文字颜色 */
+            color: #fff;
+            /* 取消确认按钮的边框 */
+            border: none;
+            /* 设置确认按钮的边框圆角 */
+            border-radius: 15px;
+            /* 设置确认按钮的鼠标样式 */
+            cursor: pointer;
+            /* 设置确认按钮的背景过渡效果 */
+            transition: background 0.3s ease;
+        }
+
+        .confirm-btn:hover {
+            /* 设置确认按钮鼠标悬停时的背景渐变 */
+            background: linear-gradient(270deg, #ccc4fa, #9abfff);
+        }
+
+        .todo-list-container {
+            max-height: 350px; /* 设置待办事项列表的最大高度 */
+            /* 最大宽度 */
+            max-width: 100%;
+            overflow-y: auto; /* 当内容超出时允许垂直滚动 */
+            scrollbar-width: thin; /* 设置滚动条宽度 */
+            scrollbar-color: #888 #f1f1f1; /* 设置滚动条颜色 */
+        }   
+        .playlist-container div:hover {
+            background-color: rgba(255, 255, 255, 0.3); /* 悬停高亮效果 */
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="player">
+            <div class="controls">
+                <input type="file" id="upload" accept="audio/*" multiple style="display: none;">
+                <input type="file" id="folder-upload" webkitdirectory directory multiple style="display: none;">
+                <label for="upload" class="upload-btn">选择音乐</label>
+                <label for="folder-upload" class="upload-btn">选择文件夹</label>
+                <button class="upload-btn" id="play-mode-btn" onclick="togglePlayMode()">
+                    <span id="play-mode-icon">🔁</span>
+                </button>
+                <div class="player-controls">
+                    <button id="prev">⏮</button>
+                    <button id="play-pause">⏯</button>
+                    <button id="next">⏭</button>
+                </div>
+                <div class="volume-control">
+                    <button class="volume-btn">🔊</button>
+                    <input type="range" id="volume" min="0" max="100" step="1" value="100" class="volume-slider">
+                </div>
+            </div>
+            <div class="song-title" id="song-title">未选择音乐</div>
+            <div class="progress-bar">
+                <input type="range" id="progress" min="0" value="0" class="progress-bar">
+            </div>
+            <div class="time" id="time">00:00 / 00:00</div>
+            <div class="playlist-container">
+                
+                <div id="playlist"></div>
+                <!-- <div style="height: 200vh;"> -->
+            </div>
+            <audio id="audio"></audio>
+            <div id="audio-bar"></div>
+        </div>
+        <div class="right-section">
+
+            <div class="time-display-box" id="time-display">
+                <div class="time"></div>
+                <div class="greeting"></div>
+                <div class="lock-btn" id="lock-btn">锁定</div>
+            </div>
+            <!-- <div class="lock-btn" id="lock-btn">锁定</div> -->
+            <div class="todo-list">
+            <h2>待办事项</h2>
+            <input type="text" id="todo-input" placeholder="添加待办事项" maxlength="55" onkeydown="handleKeyDown(event)">
+            <button onclick="addTodo()">添加</button>
+            
+            <!-- 创建一个div元素，用于存放待办事项列表 -->
+            <div class="todo-list-container" id="todos">
+            <!-- <div class="lock-btn" id="lock-btn">锁定</div> -->
+            </div>
+            
+            <!-- <div class="lock-btn" id="lock-btn">锁定</div> -->
+    </div>
+    <div id="lock-screen">
+        <div id="password-display" class="password-display"></div>
+        <input type="password" id="password" class="password-input" placeholder="请输入密码" style="display: none;">
+        <button onclick="showPasswordInput()" class="confirm-btn">确认</button>
+        <button onclick="unlockScreen()" class="unlock-btn" style="display: none;">解锁</button>
+        </div>
+    </div>
+    <script>
+        const audio = document.getElementById('audio');
+        const playPauseBtn = document.getElementById('play-pause');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const progress = document.getElementById('progress');
+        const volume = document.getElementById('volume');
+        const playlist = document.getElementById('playlist');
+        const upload = document.getElementById('upload');
+        const folderUpload = document.getElementById('folder-upload');
+        const songTitle = document.getElementById('song-title');
+        const timeDisplay = document.getElementById('time');
+
+        let currentTrack = 0;
+        let tracks = [];
+        let wasPlayingBeforeLock = false;
+
+        // 添加注释：添加音乐文件
+        upload.addEventListener('change', function(event) {
+            tracks = Array.from(event.target.files);
+            currentTrack = 0;
+            loadTrack();
+            buildPlaylist();
+        });
+
+        // 添加注释：添加文件夹中的音乐文件
+        folderUpload.addEventListener('change', function(event) {
+            tracks = tracks.concat(Array.from(event.target.files).filter(file => file.type.startsWith('audio/')));
+            currentTrack = 0;
+            loadTrack();
+            buildPlaylist();
+        });
+
+        let isRandom = false;
+
+        // 添加切换播放模式的函数
+        function togglePlayMode() {
+            // 切换随机播放和循环播放模式
+            isRandom = !isRandom;
+            // 获取播放模式图标
+            const playModeIcon = document.getElementById('play-mode-icon');
+            // 如果是随机播放模式，则显示随机播放图标
+            if (isRandom) {
+                playModeIcon.textContent = '🔀';
+            // 否则，显示循环播放图标
+            } else {
+                playModeIcon.textContent = '🔁';
+            }
+        }
+
+        // 修改播放下一首的函数
+        nextBtn.addEventListener('click', function() {
+            // 如果是随机播放模式，则随机选择一首歌曲
+            if (isRandom) {
+                currentTrack = Math.floor(Math.random() * tracks.length);
+            // 否则，按顺序播放下一首歌曲
+            } else {
+                // 如果当前歌曲不是最后一首，则播放下一首
+                if (currentTrack < tracks.length - 1) {
+                    currentTrack++;
+                // 否则，播放第一首歌曲
+                } else {
+                    currentTrack = 0;
+                }
+            }
+            // 加载当前歌曲
+            loadTrack();
+        });
+
+        // 添加注释：播放或暂停音乐
+        playPauseBtn.addEventListener('click', function() {
+            if (isLocked) {
+                lockScreen();
+            } else {
+                if (audio.paused) {
+                    audio.play();
+                    playPauseBtn.textContent = '⏸';
+                } else {
+                    audio.pause();
+                    playPauseBtn.textContent = '⏯';
+                }
+            }
+        });
+
+        // 添加注释：上一首
+        prevBtn.addEventListener('click', function() {
+            if (currentTrack > 0) {
+                currentTrack--;
+            } else {
+                currentTrack = tracks.length - 1;
+            }
+            loadTrack();
+        });
+
+        // 添加注释：调整进度条
+        progress.addEventListener('input', function() {
+            audio.currentTime = progress.value;
+        });
+
+        // 添加注释：调整音量
+        volume.addEventListener('input', function() {
+            audio.volume = volume.value/100;
+        });
+
+        // 添加注释：加载音乐文件
+        audio.addEventListener('loadedmetadata', function() {
+            progress.max = audio.duration;
+            const totalMinutes = Math.floor(audio.duration / 60);
+            const totalSeconds = Math.floor(audio.duration % 60);
+            timeDisplay.textContent = `00:00 / ${totalMinutes}:${totalSeconds < 10 ? '0' : ''}${totalSeconds}`;
+        });
+
+        // 添加注释：更新进度条
+        audio.addEventListener('timeupdate', function() {
+            progress.value = audio.currentTime;
+            const currentMinutes = Math.floor(audio.currentTime / 60);
+            const currentSeconds = Math.floor(audio.currentTime % 60);
+            const totalMinutes = Math.floor(audio.duration / 60);
+            const totalSeconds = Math.floor(audio.duration % 60);
+            timeDisplay.textContent = `${currentMinutes}:${currentSeconds < 10 ? '0' : ''}${currentSeconds} / ${totalMinutes}:${totalSeconds < 10 ? '0' : ''}${totalSeconds}`;
+        });
+
+        // 添加注释：播放完自动播放下一首
+        audio.addEventListener('ended', function() {
+            if (currentTrack < tracks.length - 1) {
+                currentTrack++;
+            } else {
+                currentTrack = 0;
+            }
+            loadTrack();
+        });
+
+        // 添加注释：加载音乐文件
+        function loadTrack() {
+            const track = tracks[currentTrack];
+            const url = URL.createObjectURL(track);
+            audio.src = url;
+            songTitle.textContent = track.name;
+            audio.play();
+            playPauseBtn.textContent = '⏸';
+        }
+
+        // 添加注释：构建播放列表
+        function buildPlaylist() {
+            playlist.innerHTML = '';
+            tracks.forEach((track, index) => {
+                const trackElement = document.createElement('div');
+                trackElement.textContent = track.name;
+                trackElement.addEventListener('click', function() {
+                    currentTrack = index;
+                    loadTrack();
+                });
+                playlist.appendChild(trackElement);
+            });
+        }
+
+        // 添加注释：添加待办事项
+        // function addTodo() {
+        //     const input = document.getElementById('todo-input');
+        //     const todos = document.getElementById('todos');
+        //     if (input.value.trim() !== '') {
+        //         const todoItem = document.createElement('div');
+        //         todoItem.className = 'todo-item';
+        //         const now = new Date();
+        //         const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        //         todoItem.innerHTML = `${input.value} <span class="timestamp">${timestamp}</span>`;
+        //         todos.appendChild(todoItem);
+        //         input.value = '';
+        //     }
+        // }
+
+        // 创建音频上下文和分析器
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 64; // 设置为较小的值以获取较少的柱子
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        // 创建柱子元素
+        const audioBar = document.getElementById('audio-bar');
+        for (let i = 0; i < bufferLength; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            audioBar.appendChild(bar);
+        }
+
+        // 更新音频条
+        function updateAudioBar() {
+            analyser.getByteFrequencyData(dataArray);
+
+            for (let i = 0; i < bufferLength; i++) {
+                const bar = document.querySelector(`.bar:nth-child(${i + 1})`);
+                const height = dataArray[i] / 2; // 将音频数据映射到柱子高度
+                bar.style.height = `${height}px`;
+            }
+
+            requestAnimationFrame(updateAudioBar);
+        }
+
+        // 监听音频播放
+        audio.addEventListener('play', function() {
+            const source = audioContext.createMediaElementSource(audio);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            updateAudioBar();
+        });
+
+        // 监听音频暂停
+        audio.addEventListener('pause', function() {
+            audioContext.suspend();
+        });
+
+        // 监听音频继续播放
+        audio.addEventListener('play', function() {
+            audioContext.resume();
+        });
+
+        let progressTimeout;
+
+        // 修改进度条事件处理程序以实现拖动后暂停0.6秒播放
+        progress.addEventListener('input', function() {
+            // 暂停音乐
+            audio.pause();
+            playPauseBtn.textContent = '⏯';
+
+            // 清除之前的定时器
+            clearTimeout(progressTimeout);
+
+            // 设置新的定时器以延迟播放
+            progressTimeout = setTimeout(function() {
+                audio.currentTime = progress.value;
+                audio.play();
+                playPauseBtn.textContent = '⏸';
+            }, 600); // 延迟0.6秒
+        });
+
+        // 添加函数以更新当地时间
+        function updateLocalTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const timeElement = document.querySelector('.time-display-box .time');
+            const greetingElement = document.querySelector('.time-display-box .greeting');
+            
+            // 生成问候语
+            let greeting;
+            if (hours >= 0 && hours < 5) {
+                greeting = "夜深了，注意休息哦";
+            } else if (hours >= 5 && hours < 9) {
+                greeting = "清晨好，新的一天开始了";
+            } else if (hours >= 9 && hours < 12) {
+                greeting = "上午好，保持活力";
+            } else if (hours >= 12 && hours < 14) {
+                greeting = "中午好，该吃饭了";
+            } else if (hours >= 14 && hours < 18) {
+                greeting = "下午好，来杯咖啡吧";
+            } else if (hours >= 18 && hours < 21) {
+                greeting = "晚上好，享受晚餐时光";
+            } else if (hours >= 21 && hours < 23) {
+                greeting = "晚上了，放松一下吧";
+            } else {
+                greeting = "深夜好，愿你做个好梦";
+            }
+
+            // 更新时间显示框内容
+            timeElement.textContent = `${hours}:${minutes}`;
+            greetingElement.textContent = greeting;
+        }
+
+        // 每分钟更新一次当地时间
+        setInterval(updateLocalTime, 60000);
+        updateLocalTime(); // 初始化时间显示和问候语
+
+        // 添加待办事项
+        // 添加待办事项
+        function addTodo() {
+            // 获取输入框元素
+            const input = document.getElementById('todo-input');
+            // 获取待办事项列表元素
+            const todos = document.getElementById('todos');
+            // 如果输入框不为空
+            if (input.value.trim() !== '') {
+                // 创建待办事项元素
+                const todoItem = document.createElement('div');
+                // 设置待办事项元素的类名
+                todoItem.className = 'todo-item';
+                // 获取当前时间
+                const now = new Date();
+                // 格式化时间
+                const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                // 设置待办事项元素的HTML内容
+                todoItem.innerHTML = `${input.value} <span class="timestamp">${timestamp}</span>`;
+                
+                // 创建删除按钮
+                const deleteBtn = document.createElement('button');
+                // 设置删除按钮的文本内容
+                deleteBtn.textContent = '×';
+                // 为删除按钮添加点击事件
+                deleteBtn.addEventListener('click', function() {
+                    // 从待办事项列表中移除待办事项元素
+                    todos.removeChild(todoItem);
+                });
+                
+                // 将删除按钮添加到待办事项元素中
+                todoItem.appendChild(deleteBtn);
+                // 将待办事项元素添加到待办事项列表中
+                todos.appendChild(todoItem);
+                // 清空输入框
+                input.value = '';
+            }
+        }
+
+        function handleFolderUpload() {
+            const files = document.getElementById('folder-upload').files;
+            const audioFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
+            tracks = tracks.concat(audioFiles);
+            buildPlaylist();
+            // 如果需要，可以在这里自动播放新添加的音乐
+        }
+
+        // 添加一个变量来跟踪锁定状态
+        let isLocked = false;
+
+        // 添加一个函数来锁定界面
+        function lockScreen() {
+            isLocked = true;
+            document.getElementById('lock-screen').style.display = 'flex';
+            wasPlayingBeforeLock = !audio.paused;
+            if (wasPlayingBeforeLock) {
+                audio.pause();
+                playPauseBtn.textContent = '⏯';
+            }
+        }
+
+        // 生成随机密码
+        function generateRandomPassword() {
+            const characters = '0123456789';
+            let password = '';
+            for (let i = 0; i < 3; i++) {
+                password += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return password;
+        }
+
+        // 修改解锁函数，增加密码验证
+        function unlockScreen() {
+            const password = document.getElementById('password').value;
+            if (password === document.getElementById('password-display').textContent.replace('密码: ', '')) {
+                isLocked = false;
+                document.getElementById('lock-screen').style.display = 'none';
+                // 恢复音频播放
+                if (wasPlayingBeforeLock) {
+                    audio.play();
+                    playPauseBtn.textContent = '⏸';
+                }
+                // 清空密码输入框
+                document.getElementById('password').value = '';
+            } else {
+                alert('密码错误');
+                // 清空密码输入框
+                document.getElementById('password').value = '';
+            }
+        }
+
+        // 锁定屏幕函数
+        function lockScreen() {
+            isLocked = true;
+            document.getElementById('lock-screen').style.display = 'flex';
+            wasPlayingBeforeLock = !audio.paused;
+            if (wasPlayingBeforeLock) {
+                audio.pause();
+                playPauseBtn.textContent = '⏯';
+            }
+            // 生成并显示随机密码
+            // 生成随机密码
+            const password = generateRandomPassword();
+            // 将密码显示在页面上
+            document.getElementById('password-display').textContent = `密码: ${password}`;
+            // 清空密码输入框
+            document.getElementById('password').value = '';
+        }
+
+        // 显示密码输入框
+        function showPasswordInput() {
+            // 隐藏密码显示框
+            document.getElementById('password-display').style.display = 'none';
+            // 显示密码输入框
+            document.getElementById('password').style.display = 'block';
+            // 隐藏确认按钮
+            document.querySelector('.confirm-btn').style.display = 'none';
+            // 显示解锁按钮
+            document.querySelector('.unlock-btn').style.display = 'block';
+        }
+        // 显示密码
+        function showPasswordOut(){
+            // 显示密码显示框
+            document.getElementById('password-display').style.display = 'block';
+            // 隐藏密码输入框
+            document.getElementById('password').style.display = 'none';
+            // 显示确认按钮
+            document.querySelector('.confirm-btn').style.display = 'block';
+            // 隐藏解锁按钮
+            document.querySelector('.unlock-btn').style.display = 'none';      
+        }
+
+        // 添加一个事件监听器到锁定按钮
+        // 为id为'lock-btn'的元素添加点击事件监听器，当点击时调用lockScreen()函数
+        document.getElementById('lock-btn').addEventListener('click', function() {
+            lockScreen();
+            showPasswordOut();
+        });
+
+        // 生成随机颜色
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // 获取所有待办事项
+        var todoItems = document.querySelectorAll('.todo-item');
+
+        // 设置随机背景颜色
+        todoItems.forEach(function(item) {
+            item.style.backgroundColor = getRandomColor();
+        });
+        function handleKeyDown(event) {
+            if (event.key === 'Enter') {
+                addTodo();
+            }
+        }
+        // 获取音量按钮元素
+        const volumeBtn = document.querySelector('.volume-btn');
+        // 获取音量滑块元素
+        const volumeSlider = document.getElementById('volume');
+
+        // 保存用户上次调节的音量值
+        let lastVolume = audio.volume;
+
+        // 为音量按钮添加点击事件监听器
+        volumeBtn.addEventListener('click', function() {
+            // 如果当前音量为0，则恢复上次调节的音量
+            if (audio.volume === 0) {
+                audio.volume = lastVolume;
+                volumeSlider.value = lastVolume * 100; // 假设音量滑块的值范围是0到100
+            } else {
+                // 否则，将音量设置为0
+                lastVolume = audio.volume;
+                audio.volume = 0;
+                volumeSlider.value = 0;
+            }
+        });
+
+        // 为音量滑块添加输入事件监听器，以保存用户调节的音量值
+        volumeSlider.addEventListener('input', function() {
+            audio.volume = volumeSlider.value / 100; // 假设音量滑块的值范围是0到100
+            lastVolume = audio.volume;
+        });
+        
+    </script>
+</body>
+</html>
